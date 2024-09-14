@@ -1,0 +1,6 @@
+node_modules/
+spec/
+src/
+package.json*
+yarn.lock*
+!src/static/js/app.js
