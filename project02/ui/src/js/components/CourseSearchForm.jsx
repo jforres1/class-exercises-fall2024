@@ -11,6 +11,7 @@ import {
     Switch,
     Space,
 } from "antd";
+import { fetchDepartmentList } from "../services/api";
 
 export default function CourseSearchForm({ fetchCourses }) {
     const classificationOpts = [
@@ -22,12 +23,22 @@ export default function CourseSearchForm({ fetchCourses }) {
         { key: "service", value: "Service Learning" },
     ];
 
+    const [departmentList, setDepartmentList] = useState([]);
+   
     const handleFormSubmit = (formData) => {
         console.log("Here's the form data:", formData);
         // fetchCourses is a function defined in the parent component (App.jsx).
         // It was passed into this component as a prop.
         fetchCourses(formData);
     };
+
+    useEffect(() => {
+        async function initializeData() {
+            const deptList = await fetchDepartmentList();
+            setDepartmentList(deptList);
+        }
+        initializeData();
+    }, []);
 
     return (
         <Form
@@ -72,19 +83,14 @@ export default function CourseSearchForm({ fetchCourses }) {
                     <Form.Item label="Department" name="department">
                         <Select>
                             <Select.Option value="">Any</Select.Option>
-
-                            {/* React Task 2:
-                                replace these hardcoded ones with ones 
-                                that are coming from the /api/departments endpoint. 
-                                You will need to use the useEffect and useState React 
-                                functions. 
-                            */}
-                            <Select.Option key="CSCI" value="CSCI">
-                                CSCI
-                            </Select.Option>
-                            <Select.Option key="NM" value="NM">
-                                NM
-                            </Select.Option>
+                            {/*
+                            * Task 2
+                            */}                          
+                            {departmentList.map((dept) =>(
+                                <Select.Option key= {dept} value={dept}>
+                                {dept}
+                                </Select.Option>
+                            ))}
                         </Select>
                     </Form.Item>
 

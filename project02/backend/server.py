@@ -35,18 +35,27 @@ async def startup():
 # Task 1
 @app.get("/api/departments/", response_model=List[str])
 async def get_department_codes(db: AsyncSession = Depends(get_db)):
-    # replace with your code...
-    return []
+    query = select(models.Course.department).distinct().order_by(models.Course.department)
+    result = await db.execute(query)
+    depts = result.scalars().all()
+    return depts
 
 
 # Task 2
 # Note: replace response_model=object with response_model=User once you've got this working
-@app.get("/api/users/{username}", response_model=object)
+@app.get("/api/users/{username}", response_model=serializers.User,)
 async def get_users_by_username(
-    username: str, db: AsyncSession = Depends(get_db)
+    username: str,
+    db: AsyncSession = Depends(get_db)
 ):
-    # replace with your code...
-    return {}
+    query = select(models.User).where(
+        models.User.username.ilike(f"%{username}%")
+    )
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")    
+    return user
 
 
 # Task 3
@@ -56,6 +65,16 @@ async def get_courses(
     instructor: str = Query(None),
     department: str = Query(None),
     hours: int = Query(None),
+    async_class: bool = Query(None),
+    diversity_intensive: bool = Query(None),
+    diversity_intensive_r: bool = Query(None),
+    first_year_seminar: bool = Query(None),
+    graduate: bool = Query(None),
+    honors: bool = Query(None),
+    arts: bool = Query(None),
+    service_learning: bool = Query(None),    
+    open: bool = Query(None),
+    days: str = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
 
@@ -85,6 +104,69 @@ async def get_courses(
                 models.Instructor.last_name.ilike(f"%{instructor}%"),
                 models.Instructor.first_name.ilike(f"%{instructor}%"),
             )
+        )
+    if async_class is not None:
+        query = query.where(
+            models.Course.async_class == async_class
+        )
+    
+    if diversity_intensive is not None:
+        query = query.where(
+            models.Course.diversity_intensive == diversity_intensive
+        )
+    
+    if diversity_intensive_r is not None:
+        query = query.where(
+            models.Course.diversity_intensive_r == diversity_intensive_r
+        )    
+
+    if first_year_seminar is not None:
+        query = query.where(
+            models.Course.first_year_seminar == first_year_seminar
+        )
+
+    if graduate is not None:
+        query = query.where(
+            models.Course.graduate == graduate
+        )    
+
+    if honors is not None:
+        query = query.where(
+            models.Course.honors == honors
+        )    
+
+    if arts is not None:
+        query = query.where(
+            models.Course.arts == arts
+        )
+    
+    if service_learning is not None:
+        query = query.where(
+            models.Course.service_learning == service_learning
+        )
+
+    # if special_catagory:
+    #     query = query.where(
+    #         or_(
+    #             models.Course.async_class,
+    #             models.Course.diversity_intensive,
+    #             models.Course.diversity_intensive_r,
+    #             models.Course.first_year_seminar,
+    #             models.Course.graduate,
+    #             models.Course.honors,
+    #             models.Course.arts,
+    #             models.Course.service_learning,
+    #         )
+    #     )
+
+    if open is not None:
+        query = query.where(
+            models.Course.open == open
+        )
+
+    if days:
+        query = query.where(
+            models.Course.days.ilike(f"%{days}%")
         )
 
     result = await db.execute(
