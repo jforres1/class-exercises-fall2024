@@ -1,10 +1,10 @@
 import asyncio
 
-from sqlalchemy import select  # , or_
+from sqlalchemy import select, and_
 from sqlalchemy.orm import joinedload, selectinload
 
 from db import AsyncSessionLocal
-from models import Course, Schedule
+from models import Course, Schedule, User
 
 """
 Documentation:
@@ -93,6 +93,31 @@ async def print_schedules(db: AsyncSessionLocal):
                 print("     * Location:", course.location.full_location)
             print()
 
+async def print_usernames(db: AsyncSessionLocal):
+    query = select(User.username).order_by(User.username)
+    result = await db.execute(query)
+    users = result.scalars().all()
+    for username in users:
+        print(f"Username: ", username)
+
+async def print_unique_departments(db: AsyncSessionLocal):
+    query = select(Course.department).distinct().order_by(Course.department)
+    result = await db.execute(query)
+    depts = result.scalars().all()
+    for dept in depts:
+        print(dept)
+
+async def print_open_cs_courses(db: AsyncSessionLocal):
+    query = select(Course).where(
+        and_(
+            Course.department == 'CSCI', 
+            Course.open == True
+        )
+    )
+    result = await db.execute(query)
+    courses = result.scalars().all()
+    for course in courses:
+        print(f"{course.crn} - {course.title}")
 
 async def main():
     # create a DB session
@@ -102,7 +127,10 @@ async def main():
     await show_courses(db)
     await show_courses_with_table_joins(db)
     await print_schedules(db)
-
+    await print_usernames(db)
+    await print_unique_departments(db)
+    await print_open_cs_courses(db)
+    
     await db.close()
 
 
